@@ -1,7 +1,7 @@
 name: Android APK (Debug) Build
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # ← Run workflow ボタンで手動実行できる
   push:
     branches: [ main, master ]
 
@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # Android SDKを用意
+      # Android SDK を用意（cmdline-tools / build-tools / platform を入れる）
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
 
@@ -27,14 +27,15 @@ jobs:
           sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
           yes | sdkmanager --licenses
 
-      # Gradle（ラッパー無しでも動くように）
-      - name: Cache Gradle
-        uses: gradle/actions/setup-gradle@v3
+      # Gradle が SDK を見つけられるように local.properties を作る
+      - name: Write local.properties (SDK path)
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
 
+      # Gradle 実行（ラッパー無しでも動く方式）
       - name: Build Debug APK
         uses: gradle/gradle-build-action@v3
         with:
-          gradle-version: 8.7
+          gradle-version: 8.6   # AGP 8.4.0 と相性の良い版
           arguments: assembleDebug
 
       - name: Upload APK artifact
